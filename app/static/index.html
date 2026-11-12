@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jira + GitHub AI Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['Fira Code', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="font-bold tracking-tight text-white flex items-center gap-2">
+            Jira-GitHub AI Assistant
+            <span class="text-[10px] font-semibold uppercase tracking-wider bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2 py-0.5 rounded-full">FastAPI RAG</span>
+          </span>
+          <p class="text-xs text-slate-400">For Product Managers & Developers</p>
+        </div>
+      </div>
+
+      <!-- User & Integrations Status -->
+      <div class="flex items-center space-x-3">
+        <button id="integrations-btn" onclick="openIntegrationsModal()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+          <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
+          <span>Integrations & Keys</span>
+        </button>
+
+        <div id="auth-section">
+          <!-- Populated by JS: Login Button or User Profile -->
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Chat Workspace -->
+  <main class="flex-1 flex max-w-7xl w-full mx-auto overflow-hidden">
+    
+    <!-- Sidebar: Sessions & Suggested Prompts -->
+    <aside class="w-72 border-r border-slate-800 p-4 hidden md:flex flex-col justify-between">
+      <div class="space-y-4">
+        <button onclick="startNewSession()" class="w-full flex items-center justify-center gap-2 py-2 px-3 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-sm font-medium shadow-md shadow-brand-600/20 transition">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          New Query Session
+        </button>
+
+        <div>
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">PM Workflows</h2>
+          <div class="space-y-1">
+            <button onclick="setPrompt('What is the status of ticket ENG-104 and what subtasks are pending?')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
+              📌 Check ticket & pending blockers
+            </button>
+            <button onclick="setPrompt('Show all high-priority bugs in project ENG')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
+              🚨 High-priority sprint bugs
+            </button>
+            <button onclick="setPrompt('Close ticket ENG-45')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
+              ✅ Close ticket directly
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Developer Workflows</h2>
+          <div class="space-y-1">
+            <button onclick="setPrompt('How did other devs fix the authentication timeout in ENG-104? Show code diff')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
+              🔍 Historical fix & code diff search
+            </button>
+            <button onclick="setPrompt('Create a bug in ENG: Search API throws 500 when query contains emojis')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
+              ⚡ Create bug ticket from chat
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-800 text-[11px] text-slate-500">
+        Hybrid RAG with Text-to-JQL & GitHub GraphQL v4
+      </div>
+    </aside>
+
+    <!-- Chat Messages Viewport -->
+    <section class="flex-1 flex flex-col justify-between bg-slate-900/40">
+      
+      <!-- Messages List -->
+      <div id="messages-container" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        <!-- Welcome Message -->
+        <div class="flex items-start gap-3 max-w-3xl">
+          <div class="w-8 h-8 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-4 text-sm text-slate-200 shadow-sm leading-relaxed">
+            <p class="font-semibold text-white mb-1">Welcome! How can I help you today?</p>
+            <p class="text-slate-300">I am connected to your Jira and GitHub workspaces. You can:</p>
+            <ul class="list-disc list-inside mt-2 space-y-1 text-slate-400 text-xs">
+              <li><strong>Check live ticket status & pending blockers:</strong> <em>"What are the tickets pending for ENG-104?"</em></li>
+              <li><strong>Investigate code fixes & diffs:</strong> <em>"How was the token refresh bug fixed in PR #45?"</em></li>
+              <li><strong>Update Jira:</strong> <em>"Mark ENG-104 as Done"</em> or <em>"Create a bug in ENG: Mobile nav overflows"</em></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Bar -->
+      <div class="p-4 border-t border-slate-800 bg-slate-900/90 backdrop-blur">
+        <form id="chat-form" onsubmit="handleSendMessage(event)" class="max-w-4xl mx-auto flex items-end gap-2">
+          <div class="flex-1 relative">
+            <textarea
+              id="user-input"
+              rows="1"
+              placeholder="Ask a question about a ticket, request code diffs, or execute Jira actions..."
+              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none leading-relaxed"
+              onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleSendMessage(event); }"
+            ></textarea>
+          </div>
+          <button
+            type="submit"
+            id="send-btn"
+            class="h-11 px-4 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white rounded-xl font-medium text-sm flex items-center justify-center gap-1.5 shadow-md shadow-brand-600/30 transition shrink-0"
+          >
+            <span>Send</span>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Integrations & Settings Modal -->
+  <div id="integrations-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <button onclick="closeIntegrationsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <h3 class="text-lg font-bold text-white mb-1">Integrations & Credentials</h3>
+      <p class="text-xs text-slate-400 mb-6">Tokens are encrypted at rest using AES-256 (Fernet) and never exposed.</p>
+
+      <!-- Jira Section -->
+      <div class="mb-6 bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-semibold text-sm text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Jira Cloud
+          </span>
+          <span id="jira-status-badge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-400">Not Connected</span>
+        </div>
+        <form onsubmit="handleSaveJira(event)" class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-300 block mb-1">Domain</label>
+            <input type="text" id="jira-domain" placeholder="your-team.atlassian.net" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white" required />
+          </div>
+          <div>
+            <label class="text-xs text-slate-300 block mb-1">Account Email</label>
+            <input type="email" id="jira-email" placeholder="dev@company.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white" required />
+          </div>
+          <div>
+            <label class="text-xs text-slate-300 block mb-1">Atlassian REST API Token</label>
+            <input type="password" id="jira-token" placeholder="••••••••••••••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white" required />
+          </div>
+          <button type="submit" class="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition">Save Jira Token</button>
+        </form>
+      </div>
+
+      <!-- GitHub Section -->
+      <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+        <div class="flex items-center justify-between mb-3">
+          <span class="font-semibold text-sm text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> GitHub (GraphQL v4)
+          </span>
+          <span id="github-status-badge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-400">Not Connected</span>
+        </div>
+        <form onsubmit="handleSaveGitHub(event)" class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-300 block mb-1">Personal Access Token (Read Scope)</label>
+            <input type="password" id="github-token" placeholder="ghp_••••••••••••••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white" required />
+          </div>
+          <button type="submit" class="w-full py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-medium transition">Save GitHub Token</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Email OTP Login Modal -->
+  <div id="auth-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
+      <h3 class="text-lg font-bold text-white mb-1">Passwordless Sign In</h3>
+      <p class="text-xs text-slate-400 mb-6">Enter your work email to receive a secure 6-digit OTP code.</p>
+
+      <!-- Step 1: Request OTP -->
+      <div id="otp-step-1">
+        <form onsubmit="handleRequestOTP(event)" class="space-y-4">
+          <div>
+            <label class="text-xs text-slate-300 block mb-1">Work Email</label>
+            <input type="email" id="login-email" placeholder="alex@company.com" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" required />
+          </div>
+          <button type="submit" id="request-otp-btn" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-sm font-medium transition">
+            Send Verification Code
+          </button>
+        </form>
+      </div>
+
+      <!-- Step 2: Verify OTP -->
+      <div id="otp-step-2" class="hidden">
+        <form onsubmit="handleVerifyOTP(event)" class="space-y-4">
+          <div>
+            <label class="text-xs text-slate-300 block mb-1">6-Digit Verification Code</label>
+            <input type="text" id="login-otp" maxlength="6" placeholder="123456" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-center text-lg tracking-widest font-mono text-white" required />
+          </div>
+          <button type="submit" id="verify-otp-btn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition">
+            Verify & Continue
+          </button>
+          <button type="button" onclick="document.getElementById('otp-step-1').classList.remove('hidden'); document.getElementById('otp-step-2').classList.add('hidden');" class="w-full text-xs text-slate-400 hover:text-slate-200">
+            ← Change email address
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Client-side Logic -->
+  <script>
+    let authToken = localStorage.getItem("access_token");
+    let currentSessionId = null;
+
+    // Check auth on load
+    window.addEventListener("DOMContentLoaded", async () => {
+      renderAuthNav();
+      if (authToken) {
+        await refreshIntegrationBadges();
+      }
+    });
+
+    function renderAuthNav() {
+      const container = document.getElementById("auth-section");
+      if (authToken) {
+        container.innerHTML = `
+          <button onclick="handleLogout()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-300 hover:text-rose-300 border border-slate-700 transition">
+            Sign Out
+          </button>
+        `;
+      } else {
+        container.innerHTML = `
+          <button onclick="openAuthModal()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition shadow-sm">
+            Sign In with OTP
+          </button>
+        `;
+      }
+    }
+
+    function openAuthModal() {
+      document.getElementById("auth-modal").classList.remove("hidden");
+    }
+
+    function closeAuthModal() {
+      document.getElementById("auth-modal").classList.add("hidden");
+    }
+
+    function openIntegrationsModal() {
+      document.getElementById("integrations-modal").classList.remove("hidden");
+      if (authToken) refreshIntegrationBadges();
+    }
+
+    function closeIntegrationsModal() {
+      document.getElementById("integrations-modal").classList.add("hidden");
+    }
+
+    function setPrompt(promptText) {
+      const input = document.getElementById("user-input");
+      input.value = promptText;
+      input.focus();
+    }
+
+    function startNewSession() {
+      currentSessionId = null;
+      document.getElementById("messages-container").innerHTML = `
+        <div class="flex items-start gap-3 max-w-3xl">
+          <div class="w-8 h-8 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-4 text-sm text-slate-200 shadow-sm leading-relaxed">
+            <p class="font-semibold text-white mb-1">New session started.</p>
+            <p class="text-slate-300">Ask about ticket status, code changes, or request Jira actions!</p>
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleRequestOTP(event) {
+      event.preventDefault();
+      const email = document.getElementById("login-email").value;
+      const btn = document.getElementById("request-otp-btn");
+      btn.innerText = "Dispatching code...";
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch("/api/v1/auth/otp/request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        document.getElementById("otp-step-1").classList.add("hidden");
+        document.getElementById("otp-step-2").classList.remove("hidden");
+      } catch (err) {
+        alert("Failed to request OTP: " + err.message);
+      } finally {
+        btn.innerText = "Send Verification Code";
+        btn.disabled = false;
+      }
+    }
+
+    async function handleVerifyOTP(event) {
+      event.preventDefault();
+      const email = document.getElementById("login-email").value;
+      const otp = document.getElementById("login-otp").value;
+      const btn = document.getElementById("verify-otp-btn");
+      btn.innerText = "Verifying...";
+      btn.disabled = true;
+
+      try {
+        const resp = await fetch("/api/v1/auth/otp/verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp })
+        });
+        if (!resp.ok) throw new Error(await resp.text());
+        const data = await resp.json();
+        authToken = data.access_token;
+        localStorage.setItem("access_token", authToken);
+        closeAuthModal();
+        renderAuthNav();
+        await refreshIntegrationBadges();
+      } catch (err) {
+        alert("Verification failed: " + err.message);
+      } finally {
+        btn.innerText = "Verify & Continue";
+        btn.disabled = false;
+      }
+    }
+
+    function handleLogout() {
+      localStorage.removeItem("access_token");
+      authToken = null;
+      renderAuthNav();
+      location.reload();
+    }
+
+    async function refreshIntegrationBadges() {
+      if (!authToken) return;
+      try {
+        const resp = await fetch("/api/v1/integrations/status", {
+          headers: { "Authorization": `Bearer ${authToken}` }
+        });
+        if (resp.ok) {
+          const status = await resp.json();
+          const jiraBadge = document.getElementById("jira-status-badge");
+          const ghBadge = document.getElementById("github-status-badge");
+
+          if (status.jira_connected) {
+            jiraBadge.innerText = "Connected";
+            jiraBadge.className = "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-300 border border-emerald-500/30";
+          }
+          if (status.github_connected) {
+            ghBadge.innerText = "Connected";
+            ghBadge.className = "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-300 border border-emerald-500/30";
+          }
+        }
+      } catch (err) {
+        console.error("Status fetch failed:", err);
+      }
+    }
+
+    async function handleSaveJira(event) {
+      event.preventDefault();
+      if (!authToken) return openAuthModal();
+      const domain = document.getElementById("jira-domain").value;
+      const email = document.getElementById("jira-email").value;
+      const api_token = document.getElementById("jira-token").value;
+
+      const resp = await fetch("/api/v1/integrations/jira", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ domain, email, api_token })
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        alert(data.message);
+        refreshIntegrationBadges();
+      } else {
+        alert("Jira connection error: " + (data.detail || JSON.stringify(data)));
+      }
+    }
+
+    async function handleSaveGitHub(event) {
+      event.preventDefault();
+      if (!authToken) return openAuthModal();
+      const personal_access_token = document.getElementById("github-token").value;
+
+      const resp = await fetch("/api/v1/integrations/github", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ personal_access_token })
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        alert(data.message);
+        refreshIntegrationBadges();
+      } else {
+        alert("GitHub connection error: " + (data.detail || JSON.stringify(data)));
+      }
+    }
+
+    async function handleSendMessage(event) {
+      if (event) event.preventDefault();
+      const input = document.getElementById("user-input");
+      const messageText = input.value.trim();
+      if (!messageText) return;
+
+      if (!authToken) {
+        openAuthModal();
+        return;
+      }
+
+      input.value = "";
+      const container = document.getElementById("messages-container");
+
+      // Append user message
+      container.innerHTML += `
+        <div class="flex items-start gap-3 max-w-3xl ml-auto justify-end">
+          <div class="bg-brand-600 rounded-2xl p-4 text-sm text-white shadow-sm leading-relaxed max-w-xl">
+            <p>${escapeHtml(messageText)}</p>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center shrink-0 text-xs font-bold text-white">
+            U
+          </div>
+        </div>
+      `;
+      container.scrollTop = container.scrollHeight;
+
+      // Temporary bot loading bubble
+      const loadingId = "loading-" + Date.now();
+      container.innerHTML += `
+        <div id="${loadingId}" class="flex items-start gap-3 max-w-3xl">
+          <div class="w-8 h-8 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-brand-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </div>
+          <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-4 text-sm text-slate-300 shadow-sm leading-relaxed">
+            <span class="animate-pulse">Analyzing Jira tickets & GitHub repositories...</span>
+          </div>
+        </div>
+      `;
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const resp = await fetch("/api/v1/chat/message", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            session_id: currentSessionId,
+            content: messageText
+          })
+        });
+
+        const loadingElem = document.getElementById(loadingId);
+        if (loadingElem) loadingElem.remove();
+
+        if (!resp.ok) {
+          const errData = await resp.json();
+          throw new Error(errData.detail || "Server returned error");
+        }
+
+        const msgData = await resp.json();
+        
+        // Format markdown response into basic HTML
+        const formattedResponse = formatMarkdown(msgData.content);
+
+        container.innerHTML += `
+          <div class="flex items-start gap-3 max-w-3xl">
+            <div class="w-8 h-8 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-4 text-sm text-slate-200 shadow-sm leading-relaxed space-y-2">
+              ${formattedResponse}
+            </div>
+          </div>
+        `;
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        const loadingElem = document.getElementById(loadingId);
+        if (loadingElem) loadingElem.remove();
+        container.innerHTML += `
+          <div class="flex items-start gap-3 max-w-3xl">
+            <div class="w-8 h-8 rounded-lg bg-rose-600/20 border border-rose-500/30 flex items-center justify-center shrink-0">
+              ⚠️
+            </div>
+            <div class="bg-slate-800 border border-rose-700/40 rounded-2xl p-4 text-sm text-rose-300">
+              Error: ${escapeHtml(err.message)}
+            </div>
+          </div>
+        `;
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    function formatMarkdown(text) {
+      if (!text) return "";
+      let html = escapeHtml(text);
+      // bold
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // code
+      html = html.replace(/`(.*?)`/g, '<code class="bg-slate-900 px-1 py-0.5 rounded text-amber-300 font-mono text-xs">$1</code>');
+      // links [text](url)
+      html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-brand-400 hover:underline">$1</a>');
+      // line breaks
+      html = html.replace(/\n/g, '<br/>');
+      return html;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
