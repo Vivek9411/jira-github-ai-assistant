@@ -78,8 +78,9 @@ if os.path.exists(static_dir):
 
 
 @app.get("/", include_in_schema=False)
+@app.get("/login", include_in_schema=False)
 async def serve_index() -> FileResponse:
-    """Serve web chat dashboard UI."""
+    """Serve web chat dashboard UI and login view."""
     index_file = os.path.join(static_dir, "index.html")
     return FileResponse(index_file)
 

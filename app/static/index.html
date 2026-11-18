@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<html lang="en" class="h-full bg-[#F8FAFC] text-[#27374D]">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,335 +7,713 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['Fira Code', 'monospace'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
-            brand: {
-              50: '#eef2ff',
-              100: '#e0e7ff',
-              500: '#6366f1',
-              600: '#4f46e5',
-              700: '#4338ca',
+            palette: {
+              navy: '#27374D',
+              steel: '#526D82',
+              mist: '#9DB2BF',
+              light: '#DDE6ED',
+              canvas: '#F8FAFC',
+              card: '#FFFFFF',
             }
+          },
+          keyframes: {
+            slideUpFade: {
+              '0%': { opacity: '0', transform: 'translateY(6px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            softPulse: {
+              '0%, 100%': { opacity: '1' },
+              '50%': { opacity: '0.4' },
+            }
+          },
+          animation: {
+            slideUp: 'slideUpFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            softPulse: 'softPulse 1.8s ease-in-out infinite',
           }
         }
       }
     }
   </script>
   <style>
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    /* Clean custom scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #9DB2BF; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #526D82; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background-color: #F8FAFC;
+      color: #27374D;
+    }
   </style>
 </head>
-<body class="h-full flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+<body class="h-full flex flex-col font-sans antialiased selection:bg-[#9DB2BF]/30 selection:text-[#27374D]">
 
-  <!-- Top Navigation Bar -->
-  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-20">
-    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
-          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+  <!-- ============================================================== -->
+  <!-- 1. FULL-WIDTH HEADER (Strict Baseline & Viewport Edge Flush)   -->
+  <!-- ============================================================== -->
+  <header class="h-14 border-b border-[#DDE6ED] bg-white shrink-0 z-30">
+    <div class="w-full h-full px-4 sm:px-6 flex items-center justify-between">
+      
+      <!-- Left: Mobile Sidebar Toggle + Brand Logo -->
+      <div class="flex items-center gap-3">
+        <button
+          id="btn-sidebar-toggle"
+          onclick="toggleSidebar()"
+          class="md:hidden p-1.5 -ml-1.5 rounded-lg text-[#526D82] hover:bg-[#DDE6ED]/50 transition"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
-        </div>
-        <div>
-          <span class="font-bold tracking-tight text-white flex items-center gap-2">
-            Jira-GitHub AI Assistant
-            <span class="text-[10px] font-semibold uppercase tracking-wider bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2 py-0.5 rounded-full">FastAPI RAG</span>
-          </span>
-          <p class="text-xs text-slate-400">For Product Managers & Developers</p>
-        </div>
-      </div>
-
-      <!-- User & Integrations Status -->
-      <div class="flex items-center space-x-3">
-        <button id="integrations-btn" onclick="openIntegrationsModal()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
-          <svg class="w-4 h-4 text-emerald-400" fill="currentColor" viewBox="0 0 8 8"><circle cx="4" cy="4" r="3"/></svg>
-          <span>Integrations & Keys</span>
         </button>
 
-        <div id="auth-section">
-          <!-- Populated by JS: Login Button or User Profile -->
+        <a href="/" class="flex items-center gap-2.5 group">
+          <div class="w-8 h-8 rounded-lg bg-[#27374D] flex items-center justify-center text-[#DDE6ED] shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <div class="flex items-center gap-1.5 leading-none">
+            <span class="font-bold text-[#27374D] tracking-tight text-sm">Jira</span>
+            <span class="text-[#9DB2BF] font-normal text-xs">•</span>
+            <span class="font-bold text-[#27374D] tracking-tight text-sm">GitHub</span>
+            <span class="hidden sm:inline-block text-[10px] uppercase font-semibold text-[#526D82] tracking-wider px-1.5 py-0.5 bg-[#DDE6ED]/60 rounded ml-1">AI</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Right: Status Badges, Keys Button, User Auth -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        
+        <!-- Status Badges (Visible When Authenticated) -->
+        <div id="nav-badges" class="hidden sm:flex items-center gap-2">
+          <button
+            onclick="openCredentialsModal('jira')"
+            class="h-8 px-2.5 rounded-lg text-xs font-medium border border-[#DDE6ED] bg-[#DDE6ED]/40 text-[#526D82] hover:bg-[#DDE6ED] transition flex items-center gap-1.5"
+            id="badge-jira"
+            title="Configure Jira credentials"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-[#9DB2BF]" id="indicator-jira"></span>
+            <span id="label-jira">Jira: Off</span>
+          </button>
+          
+          <button
+            onclick="openCredentialsModal('github')"
+            class="h-8 px-2.5 rounded-lg text-xs font-medium border border-[#DDE6ED] bg-[#DDE6ED]/40 text-[#526D82] hover:bg-[#DDE6ED] transition flex items-center gap-1.5"
+            id="badge-github"
+            title="Configure GitHub credentials"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-[#9DB2BF]" id="indicator-github"></span>
+            <span id="label-github">GitHub: Off</span>
+          </button>
+        </div>
+
+        <!-- Keys Modal Trigger Button -->
+        <button
+          id="btn-manage-creds"
+          onclick="openCredentialsModal()"
+          class="hidden h-8 px-3 text-xs font-medium rounded-lg bg-white hover:bg-[#DDE6ED]/40 text-[#526D82] hover:text-[#27374D] border border-[#DDE6ED] transition flex items-center gap-1.5 shadow-sm"
+        >
+          <svg class="w-3.5 h-3.5 text-[#526D82]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+          <span>Keys</span>
+        </button>
+
+        <!-- Auth Section / Sign Out -->
+        <div id="nav-auth-section" class="flex items-center">
+          <span class="text-xs text-[#526D82] hidden sm:inline-block">Stateless · Browser BYOK</span>
         </div>
       </div>
+
     </div>
   </header>
 
-  <!-- Main Chat Workspace -->
-  <main class="flex-1 flex max-w-7xl w-full mx-auto overflow-hidden">
-    
-    <!-- Sidebar: Sessions & Suggested Prompts -->
-    <aside class="w-72 border-r border-slate-800 p-4 hidden md:flex flex-col justify-between">
-      <div class="space-y-4">
-        <button onclick="startNewSession()" class="w-full flex items-center justify-center gap-2 py-2 px-3 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-sm font-medium shadow-md shadow-brand-600/20 transition">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          New Query Session
-        </button>
-
-        <div>
-          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">PM Workflows</h2>
-          <div class="space-y-1">
-            <button onclick="setPrompt('What is the status of ticket ENG-104 and what subtasks are pending?')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
-              📌 Check ticket & pending blockers
-            </button>
-            <button onclick="setPrompt('Show all high-priority bugs in project ENG')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
-              🚨 High-priority sprint bugs
-            </button>
-            <button onclick="setPrompt('Close ticket ENG-45')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
-              ✅ Close ticket directly
-            </button>
-          </div>
+  <!-- ============================================================== -->
+  <!-- 2. LOGIN VIEW (Symmetrical, Noise-Reduced & Centered)           -->
+  <!-- ============================================================== -->
+  <section id="login-view" class="flex-1 min-h-0 flex flex-col items-center justify-center p-4 overflow-y-auto">
+    <div class="max-w-sm w-full mx-auto my-auto animate-slideUp">
+      
+      <!-- Card Header -->
+      <div class="text-center mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#27374D] text-[#DDE6ED] flex items-center justify-center mx-auto mb-3 shadow-sm">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
         </div>
-
-        <div>
-          <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Developer Workflows</h2>
-          <div class="space-y-1">
-            <button onclick="setPrompt('How did other devs fix the authentication timeout in ENG-104? Show code diff')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
-              🔍 Historical fix & code diff search
-            </button>
-            <button onclick="setPrompt('Create a bug in ENG: Search API throws 500 when query contains emojis')" class="w-full text-left p-2 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition truncate">
-              ⚡ Create bug ticket from chat
-            </button>
-          </div>
-        </div>
+        <h1 class="text-xl font-bold text-[#27374D] tracking-tight">
+          Sign In
+        </h1>
+        <p class="mt-1 text-xs text-[#526D82]">
+          Passwordless OTP verification. Keys remain strictly on your device.
+        </p>
       </div>
 
-      <div class="pt-4 border-t border-slate-800 text-[11px] text-slate-500">
-        Hybrid RAG with Text-to-JQL & GitHub GraphQL v4
+      <!-- Auth Card -->
+      <div class="bg-white border border-[#DDE6ED] rounded-2xl p-6 sm:p-7 shadow-sm">
+        
+        <!-- Step 1: Request OTP -->
+        <div id="login-step-1">
+          <form onsubmit="handleRequestOTP(event)" class="space-y-4" novalidate>
+            <div>
+              <label for="login-email" class="block text-xs font-semibold text-[#526D82] mb-1.5">
+                Work Email Address
+              </label>
+              <input
+                type="email"
+                id="login-email"
+                required
+                placeholder="name@company.com"
+                autocomplete="email"
+                oninput="handleEmailInput()"
+                class="w-full h-10 bg-[#F8FAFC] border border-[#DDE6ED] rounded-xl px-3.5 text-xs text-[#27374D] placeholder-[#9DB2BF] focus:outline-none focus:border-[#526D82] focus:bg-white transition"
+              />
+              <div id="email-error-msg" class="hidden mt-1.5 text-[11px] text-rose-600 font-medium flex items-center gap-1.5 animate-slideUp" role="alert">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span id="email-error-text">Please enter a valid work email address.</span>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              id="btn-send-otp"
+              class="w-full h-10 bg-[#27374D] hover:bg-[#526D82] text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              <span>Send Verification Code</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Verify OTP -->
+        <div id="login-step-2" class="hidden">
+          <div class="mb-4 p-2.5 bg-[#DDE6ED]/40 border border-[#DDE6ED] rounded-xl text-xs text-[#526D82] flex items-center justify-between">
+            <span class="truncate">Code sent to: <strong id="sent-email-label" class="text-[#27374D] font-semibold"></strong></span>
+            <button type="button" onclick="backToStep1()" class="text-[#27374D] hover:underline font-semibold text-xs shrink-0 ml-2">Edit</button>
+          </div>
+
+          <form onsubmit="handleVerifyOTP(event)" class="space-y-4" novalidate>
+            <div>
+              <label for="login-otp" class="block text-xs font-semibold text-[#526D82] mb-1.5 text-center">
+                Enter 6-Digit Passcode
+              </label>
+              <input
+                type="text"
+                id="login-otp"
+                maxlength="6"
+                pattern="^[0-9]{6}$"
+                required
+                placeholder="123456"
+                inputmode="numeric"
+                oninput="handleOtpInput(this)"
+                class="w-full h-12 bg-[#F8FAFC] border border-[#DDE6ED] rounded-xl px-3 text-center text-xl font-mono tracking-widest text-[#27374D] placeholder-[#9DB2BF] focus:outline-none focus:border-[#526D82] focus:bg-white transition"
+              />
+              <div id="otp-error-msg" class="hidden mt-1.5 text-[11px] text-rose-600 font-medium text-center animate-slideUp" role="alert">
+                <span id="otp-error-text">Please enter the 6-digit verification code.</span>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              id="btn-verify-otp"
+              class="w-full h-10 bg-[#27374D] hover:bg-[#526D82] text-white rounded-xl text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 shadow-sm"
+            >
+              <span>Verify & Continue</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- 3. CHAT WORKSPACE (Full Viewport Width Frame)                  -->
+  <!-- ============================================================== -->
+  <main id="chat-view" class="flex-1 min-h-0 flex w-full overflow-hidden hidden">
+    
+    <!-- Sidebar: Docked to Left Viewport Edge -->
+    <aside id="chat-sidebar" class="w-64 border-r border-[#DDE6ED] bg-white p-4 hidden md:flex flex-col justify-between shrink-0">
+      <div class="space-y-5">
+        
+        <!-- New Query Button -->
+        <button
+          onclick="startNewSession()"
+          class="w-full h-9 flex items-center justify-center gap-2 px-3 bg-[#27374D] hover:bg-[#526D82] text-white rounded-xl text-xs font-semibold transition shadow-sm"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span>New Query</span>
+        </button>
+
+        <!-- Suggested Queries -->
+        <div>
+          <div class="text-[10px] font-bold text-[#9DB2BF] uppercase tracking-wider mb-2 px-2.5">
+            Quick Actions
+          </div>
+          <div class="space-y-1">
+            <button
+              onclick="setPrompt('What is the status of ticket ENG-104 and what subtasks are pending?')"
+              class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-medium text-[#526D82] hover:bg-[#DDE6ED]/50 hover:text-[#27374D] transition flex items-center gap-2"
+            >
+              <svg class="w-3.5 h-3.5 text-[#9DB2BF] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              <span class="truncate">Check ENG-104 blockers</span>
+            </button>
+            <button
+              onclick="setPrompt('Show all high-priority bugs in project ENG')"
+              class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-medium text-[#526D82] hover:bg-[#DDE6ED]/50 hover:text-[#27374D] transition flex items-center gap-2"
+            >
+              <svg class="w-3.5 h-3.5 text-[#9DB2BF] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              <span class="truncate">High-priority bugs</span>
+            </button>
+            <button
+              onclick="setPrompt('Close ticket ENG-45')"
+              class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-medium text-[#526D82] hover:bg-[#DDE6ED]/50 hover:text-[#27374D] transition flex items-center gap-2"
+            >
+              <svg class="w-3.5 h-3.5 text-[#9DB2BF] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span class="truncate">Close ticket ENG-45</span>
+            </button>
+            <button
+              onclick="setPrompt('How did other devs fix the authentication timeout in ENG-104? Show code diff')"
+              class="w-full text-left px-2.5 py-2 rounded-xl text-xs font-medium text-[#526D82] hover:bg-[#DDE6ED]/50 hover:text-[#27374D] transition flex items-center gap-2"
+            >
+              <svg class="w-3.5 h-3.5 text-[#9DB2BF] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+              </svg>
+              <span class="truncate">Past fix & code diff</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Status & Keys Indicator -->
+      <div class="pt-3 border-t border-[#DDE6ED] text-[11px] text-[#526D82] flex items-center justify-between px-1">
+        <span class="truncate flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#9DB2BF]" id="sidebar-indicator"></span>
+          <span id="sidebar-keys-status">Keys: Browser only</span>
+        </span>
+        <button onclick="openCredentialsModal()" class="text-[#27374D] hover:underline font-semibold text-xs">Edit</button>
       </div>
     </aside>
 
-    <!-- Chat Messages Viewport -->
-    <section class="flex-1 flex flex-col justify-between bg-slate-900/40">
+    <!-- Main Chat Workspace (Fills Remaining Width) -->
+    <section class="flex-1 min-h-0 flex flex-col justify-between bg-[#F8FAFC]">
       
-      <!-- Messages List -->
-      <div id="messages-container" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-        <!-- Welcome Message -->
-        <div class="flex items-start gap-3 max-w-3xl">
-          <div class="w-8 h-8 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
+      <!-- Messages Viewport (Scrollable with Identical Centered Column) -->
+      <div id="messages-container" class="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-6">
+        <div id="messages-list" class="max-w-3xl mx-auto space-y-4 w-full">
+          
+          <!-- Welcome Message -->
+          <div class="flex items-start gap-3 w-full animate-slideUp">
+            <div class="w-7 h-7 rounded-lg bg-[#27374D] text-[#DDE6ED] flex items-center justify-center shrink-0 text-xs font-semibold mt-0.5">
+              ⚡
+            </div>
+            <div class="max-w-[85%] bg-white border border-[#DDE6ED] rounded-2xl rounded-tl-sm p-4 text-xs text-[#27374D] shadow-sm leading-relaxed space-y-2">
+              <p class="font-semibold text-[#27374D]">Hi! 👋 How can I help you today?</p>
+              <p class="text-[#526D82]">
+                Query live Jira tickets, inspect linked PR code changes on GitHub, or transition tickets.
+              </p>
+              <div class="pt-2 border-t border-[#DDE6ED]/60 flex flex-wrap gap-1.5">
+                <button
+                  onclick="setPrompt('What is the status of ENG-104?')"
+                  class="px-2.5 py-1 rounded-lg bg-[#DDE6ED]/50 hover:bg-[#DDE6ED] text-[#27374D] text-[11px] font-medium transition"
+                >
+                  Status of ENG-104
+                </button>
+                <button
+                  onclick="setPrompt('Show high-priority bugs in ENG')"
+                  class="px-2.5 py-1 rounded-lg bg-[#DDE6ED]/50 hover:bg-[#DDE6ED] text-[#27374D] text-[11px] font-medium transition"
+                >
+                  High-priority bugs
+                </button>
+                <button
+                  onclick="openCredentialsModal()"
+                  class="px-2.5 py-1 rounded-lg bg-[#27374D] text-white hover:bg-[#526D82] text-[11px] font-medium transition flex items-center gap-1"
+                >
+                  <span>Set Keys</span>
+                  <span>&rarr;</span>
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-4 text-sm text-slate-200 shadow-sm leading-relaxed">
-            <p class="font-semibold text-white mb-1">Welcome! How can I help you today?</p>
-            <p class="text-slate-300">I am connected to your Jira and GitHub workspaces. You can:</p>
-            <ul class="list-disc list-inside mt-2 space-y-1 text-slate-400 text-xs">
-              <li><strong>Check live ticket status & pending blockers:</strong> <em>"What are the tickets pending for ENG-104?"</em></li>
-              <li><strong>Investigate code fixes & diffs:</strong> <em>"How was the token refresh bug fixed in PR #45?"</em></li>
-              <li><strong>Update Jira:</strong> <em>"Mark ENG-104 as Done"</em> or <em>"Create a bug in ENG: Mobile nav overflows"</em></li>
-            </ul>
-          </div>
+
         </div>
       </div>
 
-      <!-- Input Bar -->
-      <div class="p-4 border-t border-slate-800 bg-slate-900/90 backdrop-blur">
-        <form id="chat-form" onsubmit="handleSendMessage(event)" class="max-w-4xl mx-auto flex items-end gap-2">
-          <div class="flex-1 relative">
+      <!-- Input Bar (Matches max-w-3xl Column Exactly) -->
+      <div class="border-t border-[#DDE6ED] bg-white py-3.5 px-4 sm:px-6 shrink-0">
+        <div class="max-w-3xl mx-auto w-full">
+          <form id="chat-form" onsubmit="handleSendMessage(event)" class="bg-[#F8FAFC] border border-[#DDE6ED] rounded-2xl p-1.5 pr-2 focus-within:border-[#526D82] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#526D82]/10 transition shadow-sm flex items-end gap-2">
             <textarea
               id="user-input"
               rows="1"
-              placeholder="Ask a question about a ticket, request code diffs, or execute Jira actions..."
-              class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent resize-none leading-relaxed"
+              placeholder="Ask about a ticket, check diffs, or close an issue..."
+              class="flex-1 bg-transparent px-3 py-2 text-xs text-[#27374D] placeholder-[#9DB2BF] focus:outline-none resize-none leading-relaxed block max-h-32 min-h-[36px]"
               onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); handleSendMessage(event); }"
+              oninput="autoResizeTextarea(this)"
             ></textarea>
+            <button
+              type="submit"
+              id="send-btn"
+              class="h-8 px-3.5 bg-[#27374D] hover:bg-[#526D82] disabled:opacity-40 text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition shrink-0 mb-0.5 shadow-sm"
+            >
+              <span>Send</span>
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </button>
+          </form>
+          <div class="text-[10px] text-[#9DB2BF] text-center mt-1.5 flex items-center justify-center gap-2">
+            <span>Enter to send · Shift+Enter for new line</span>
           </div>
-          <button
-            type="submit"
-            id="send-btn"
-            class="h-11 px-4 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white rounded-xl font-medium text-sm flex items-center justify-center gap-1.5 shadow-md shadow-brand-600/30 transition shrink-0"
-          >
-            <span>Send</span>
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
-            </svg>
-          </button>
-        </form>
+        </div>
       </div>
 
     </section>
   </main>
 
-  <!-- Integrations & Settings Modal -->
-  <div id="integrations-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
-      <button onclick="closeIntegrationsModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+  <!-- ============================================================== -->
+  <!-- 4. CREDENTIALS MODAL (Harmonious Dimensions & Clean Feedback)  -->
+  <!-- ============================================================== -->
+  <div id="credentials-modal" class="fixed inset-0 bg-[#27374D]/30 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border border-[#DDE6ED] rounded-2xl max-w-lg w-full p-6 shadow-xl relative animate-slideUp max-h-[90vh] overflow-y-auto">
+      
+      <!-- Close Button -->
+      <button onclick="closeCredentialsModal()" class="w-7 h-7 rounded-lg hover:bg-[#DDE6ED]/50 flex items-center justify-center text-[#9DB2BF] hover:text-[#27374D] transition absolute top-5 right-5">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
       </button>
 
-      <h3 class="text-lg font-bold text-white mb-1">Integrations & Credentials</h3>
-      <p class="text-xs text-slate-400 mb-6">Tokens are encrypted at rest using AES-256 (Fernet) and never exposed.</p>
+      <div class="mb-5">
+        <h3 class="text-sm font-bold text-[#27374D]">Client Credentials (BYOK)</h3>
+        <p class="text-xs text-[#526D82] mt-0.5">Stored strictly in your browser. Tokens never touch our server database.</p>
+      </div>
 
       <!-- Jira Section -->
-      <div class="mb-6 bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+      <div class="mb-4 p-4 bg-[#F8FAFC] rounded-xl border border-[#DDE6ED]">
         <div class="flex items-center justify-between mb-3">
-          <span class="font-semibold text-sm text-white flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Jira Cloud
+          <span class="text-xs font-semibold text-[#27374D] flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#526D82]"></span>
+            Atlassian Jira
           </span>
-          <span id="jira-status-badge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-400">Not Connected</span>
+          <span id="jira-save-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#DDE6ED] text-[#526D82]">Not Set</span>
         </div>
+        
         <form onsubmit="handleSaveJira(event)" class="space-y-3">
           <div>
-            <label class="text-xs text-slate-300 block mb-1">Domain</label>
-            <input type="text" id="jira-domain" placeholder="your-team.atlassian.net" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white" required />
+            <label class="block text-[11px] font-medium text-[#526D82] mb-1">Jira Cloud Domain</label>
+            <input type="text" id="jira-domain" placeholder="company.atlassian.net" class="w-full h-9 bg-white border border-[#DDE6ED] rounded-xl px-3 text-xs text-[#27374D] placeholder-[#9DB2BF] focus:outline-none focus:border-[#526D82]" required />
           </div>
           <div>
-            <label class="text-xs text-slate-300 block mb-1">Account Email</label>
-            <input type="email" id="jira-email" placeholder="dev@company.com" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white" required />
+            <label class="block text-[11px] font-medium text-[#526D82] mb-1">Account Email</label>
+            <input type="email" id="jira-email" placeholder="dev@company.com" class="w-full h-9 bg-white border border-[#DDE6ED] rounded-xl px-3 text-xs text-[#27374D] placeholder-[#9DB2BF] focus:outline-none focus:border-[#526D82]" required />
           </div>
           <div>
-            <label class="text-xs text-slate-300 block mb-1">Atlassian REST API Token</label>
-            <input type="password" id="jira-token" placeholder="••••••••••••••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white" required />
+            <label class="block text-[11px] font-medium text-[#526D82] mb-1">REST API Token</label>
+            <input type="password" id="jira-token" placeholder="ATATT..." class="w-full h-9 bg-white border border-[#DDE6ED] rounded-xl px-3 text-xs text-[#27374D] placeholder-[#9DB2BF] focus:outline-none focus:border-[#526D82]" required />
           </div>
-          <button type="submit" class="w-full py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-medium transition">Save Jira Token</button>
+          <div id="jira-status-msg" class="hidden text-xs font-medium py-1"></div>
+          <button type="submit" id="btn-save-jira" class="w-full h-8 bg-[#27374D] hover:bg-[#526D82] text-white rounded-xl text-xs font-semibold transition shadow-sm">
+            Save Jira Credentials
+          </button>
         </form>
       </div>
 
       <!-- GitHub Section -->
-      <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/60">
+      <div class="mb-5 p-4 bg-[#F8FAFC] rounded-xl border border-[#DDE6ED]">
         <div class="flex items-center justify-between mb-3">
-          <span class="font-semibold text-sm text-white flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span> GitHub (GraphQL v4)
+          <span class="text-xs font-semibold text-[#27374D] flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-[#526D82]"></span>
+            GitHub
           </span>
-          <span id="github-status-badge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-400">Not Connected</span>
+          <span id="github-save-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded bg-[#DDE6ED] text-[#526D82]">Not Set</span>
         </div>
+        
         <form onsubmit="handleSaveGitHub(event)" class="space-y-3">
           <div>
-            <label class="text-xs text-slate-300 block mb-1">Personal Access Token (Read Scope)</label>
-            <input type="password" id="github-token" placeholder="ghp_••••••••••••••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white" required />
+            <label class="block text-[11px] font-medium text-[#526D82] mb-1">Personal Access Token (PAT)</label>
+            <input type="password" id="github-token" placeholder="ghp_..." class="w-full h-9 bg-white border border-[#DDE6ED] rounded-xl px-3 text-xs text-[#27374D] placeholder-[#9DB2BF] focus:outline-none focus:border-[#526D82]" required />
           </div>
-          <button type="submit" class="w-full py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-medium transition">Save GitHub Token</button>
+          <div>
+            <label class="block text-[11px] font-medium text-[#526D82] mb-1">Default Repo (optional)</label>
+            <input type="text" id="github-repo" placeholder="owner/repo" class="w-full h-9 bg-white border border-[#DDE6ED] rounded-xl px-3 text-xs text-[#27374D] placeholder-[#9DB2BF] focus:outline-none focus:border-[#526D82]" />
+          </div>
+          <div id="github-status-msg" class="hidden text-xs font-medium py-1"></div>
+          <button type="submit" id="btn-save-github" class="w-full h-8 bg-[#27374D] hover:bg-[#526D82] text-white rounded-xl text-xs font-semibold transition shadow-sm">
+            Save GitHub Credentials
+          </button>
         </form>
+      </div>
+
+      <!-- Footer Action -->
+      <div class="flex items-center justify-between pt-3 border-t border-[#DDE6ED]">
+        <button onclick="handleClearKeysWithConfirmation()" class="text-xs text-[#526D82] hover:text-rose-600 transition font-medium">
+          Clear Stored Keys
+        </button>
+        <button onclick="closeCredentialsModal()" class="h-8 px-4 bg-[#27374D] hover:bg-[#526D82] text-white rounded-xl text-xs font-semibold transition shadow-sm">
+          Done
+        </button>
       </div>
 
     </div>
   </div>
 
-  <!-- Email OTP Login Modal -->
-  <div id="auth-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative">
-      <h3 class="text-lg font-bold text-white mb-1">Passwordless Sign In</h3>
-      <p class="text-xs text-slate-400 mb-6">Enter your work email to receive a secure 6-digit OTP code.</p>
-
-      <!-- Step 1: Request OTP -->
-      <div id="otp-step-1">
-        <form onsubmit="handleRequestOTP(event)" class="space-y-4">
-          <div>
-            <label class="text-xs text-slate-300 block mb-1">Work Email</label>
-            <input type="email" id="login-email" placeholder="alex@company.com" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white" required />
-          </div>
-          <button type="submit" id="request-otp-btn" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-sm font-medium transition">
-            Send Verification Code
-          </button>
-        </form>
-      </div>
-
-      <!-- Step 2: Verify OTP -->
-      <div id="otp-step-2" class="hidden">
-        <form onsubmit="handleVerifyOTP(event)" class="space-y-4">
-          <div>
-            <label class="text-xs text-slate-300 block mb-1">6-Digit Verification Code</label>
-            <input type="text" id="login-otp" maxlength="6" placeholder="123456" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-center text-lg tracking-widest font-mono text-white" required />
-          </div>
-          <button type="submit" id="verify-otp-btn" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition">
-            Verify & Continue
-          </button>
-          <button type="button" onclick="document.getElementById('otp-step-1').classList.remove('hidden'); document.getElementById('otp-step-2').classList.add('hidden');" class="w-full text-xs text-slate-400 hover:text-slate-200">
-            ← Change email address
-          </button>
-        </form>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Client-side Logic -->
+  <!-- ============================================================== -->
+  <!-- 5. JAVASCRIPT LOGIC (Strict Alignment & Smooth State Sync)     -->
+  <!-- ============================================================== -->
   <script>
     let authToken = localStorage.getItem("access_token");
     let currentSessionId = null;
 
-    // Check auth on load
-    window.addEventListener("DOMContentLoaded", async () => {
-      renderAuthNav();
-      if (authToken) {
-        await refreshIntegrationBadges();
-      }
+    window.addEventListener("DOMContentLoaded", () => {
+      syncAppView();
+      loadStoredCredentialsToInputs();
+      updateCredentialBadges();
     });
 
-    function renderAuthNav() {
-      const container = document.getElementById("auth-section");
+    function toggleSidebar() {
+      const sidebar = document.getElementById("chat-sidebar");
+      if (sidebar.classList.contains("hidden")) {
+        sidebar.classList.remove("hidden");
+        sidebar.classList.add("fixed", "inset-y-0", "left-0", "z-40", "shadow-xl");
+      } else {
+        sidebar.classList.add("hidden");
+        sidebar.classList.remove("fixed", "inset-y-0", "left-0", "z-40", "shadow-xl");
+      }
+    }
+
+    function autoResizeTextarea(el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+
+    function syncAppView() {
+      const loginView = document.getElementById("login-view");
+      const chatView = document.getElementById("chat-view");
+      const navAuthSection = document.getElementById("nav-auth-section");
+      const btnManageCreds = document.getElementById("btn-manage-creds");
+      const navBadges = document.getElementById("nav-badges");
+
       if (authToken) {
-        container.innerHTML = `
-          <button onclick="handleLogout()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-rose-900/40 text-slate-300 hover:text-rose-300 border border-slate-700 transition">
+        loginView.classList.add("hidden");
+        chatView.classList.remove("hidden");
+        btnManageCreds.classList.remove("hidden");
+        navBadges.classList.remove("hidden");
+
+        navAuthSection.innerHTML = `
+          <button onclick="handleLogout()" class="h-8 px-3 text-xs font-medium rounded-lg bg-[#DDE6ED]/50 hover:bg-[#DDE6ED] text-[#526D82] hover:text-[#27374D] transition flex items-center">
             Sign Out
           </button>
         `;
+
+        checkIfNeedsCredentialPrompt();
       } else {
-        container.innerHTML = `
-          <button onclick="openAuthModal()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition shadow-sm">
-            Sign In with OTP
-          </button>
+        loginView.classList.remove("hidden");
+        chatView.classList.add("hidden");
+        btnManageCreds.classList.add("hidden");
+        navBadges.classList.add("hidden");
+
+        navAuthSection.innerHTML = `
+          <span class="text-xs text-[#526D82] hidden sm:inline-block">Stateless · Browser BYOK</span>
         `;
       }
     }
 
-    function openAuthModal() {
-      document.getElementById("auth-modal").classList.remove("hidden");
+    function checkIfNeedsCredentialPrompt() {
+      const hasJira = Boolean(localStorage.getItem("jira_token") && localStorage.getItem("jira_domain"));
+      const hasGithub = Boolean(localStorage.getItem("github_token"));
+
+      if (!hasJira && !hasGithub && !sessionStorage.getItem("credential_prompt_dismissed")) {
+        openCredentialsModal();
+      }
     }
 
-    function closeAuthModal() {
-      document.getElementById("auth-modal").classList.add("hidden");
+    function openCredentialsModal(focusSection) {
+      loadStoredCredentialsToInputs();
+      document.getElementById("credentials-modal").classList.remove("hidden");
+      if (focusSection === 'jira') {
+        setTimeout(() => document.getElementById("jira-domain").focus(), 50);
+      } else if (focusSection === 'github') {
+        setTimeout(() => document.getElementById("github-token").focus(), 50);
+      }
     }
 
-    function openIntegrationsModal() {
-      document.getElementById("integrations-modal").classList.remove("hidden");
-      if (authToken) refreshIntegrationBadges();
+    function closeCredentialsModal() {
+      document.getElementById("credentials-modal").classList.add("hidden");
+      sessionStorage.setItem("credential_prompt_dismissed", "true");
+      updateCredentialBadges();
     }
 
-    function closeIntegrationsModal() {
-      document.getElementById("integrations-modal").classList.add("hidden");
+    function loadStoredCredentialsToInputs() {
+      document.getElementById("jira-domain").value = localStorage.getItem("jira_domain") || "";
+      document.getElementById("jira-email").value = localStorage.getItem("jira_email") || "";
+      document.getElementById("jira-token").value = localStorage.getItem("jira_token") || "";
+      document.getElementById("github-token").value = localStorage.getItem("github_token") || "";
+      document.getElementById("github-repo").value = localStorage.getItem("github_repo") || "";
     }
 
-    function setPrompt(promptText) {
-      const input = document.getElementById("user-input");
-      input.value = promptText;
-      input.focus();
+    function updateCredentialBadges() {
+      const hasJira = Boolean(localStorage.getItem("jira_token") && localStorage.getItem("jira_domain"));
+      const hasGithub = Boolean(localStorage.getItem("github_token"));
+
+      const badgeJira = document.getElementById("badge-jira");
+      const badgeGithub = document.getElementById("badge-github");
+      const indicatorJira = document.getElementById("indicator-jira");
+      const indicatorGithub = document.getElementById("indicator-github");
+      const labelJira = document.getElementById("label-jira");
+      const labelGithub = document.getElementById("label-github");
+      const saveBadgeJira = document.getElementById("jira-save-badge");
+      const saveBadgeGithub = document.getElementById("github-save-badge");
+      const sidebarStatus = document.getElementById("sidebar-keys-status");
+      const sidebarIndicator = document.getElementById("sidebar-indicator");
+
+      if (hasJira) {
+        if (badgeJira) badgeJira.className = "h-8 px-2.5 rounded-lg text-xs font-medium border border-emerald-200 bg-emerald-50 text-emerald-700 flex items-center gap-1.5 transition";
+        if (indicatorJira) indicatorJira.className = "w-1.5 h-1.5 rounded-full bg-emerald-500";
+        if (labelJira) labelJira.innerText = "Jira: Ready";
+        if (saveBadgeJira) {
+          saveBadgeJira.className = "text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700";
+          saveBadgeJira.innerText = "Connected";
+        }
+      } else {
+        if (badgeJira) badgeJira.className = "h-8 px-2.5 rounded-lg text-xs font-medium border border-[#DDE6ED] bg-[#DDE6ED]/40 text-[#526D82] hover:bg-[#DDE6ED] flex items-center gap-1.5 transition";
+        if (indicatorJira) indicatorJira.className = "w-1.5 h-1.5 rounded-full bg-[#9DB2BF]";
+        if (labelJira) labelJira.innerText = "Jira: Off";
+        if (saveBadgeJira) {
+          saveBadgeJira.className = "text-[10px] font-semibold px-2 py-0.5 rounded bg-[#DDE6ED] text-[#526D82]";
+          saveBadgeJira.innerText = "Not Set";
+        }
+      }
+
+      if (hasGithub) {
+        if (badgeGithub) badgeGithub.className = "h-8 px-2.5 rounded-lg text-xs font-medium border border-emerald-200 bg-emerald-50 text-emerald-700 flex items-center gap-1.5 transition";
+        if (indicatorGithub) indicatorGithub.className = "w-1.5 h-1.5 rounded-full bg-emerald-500";
+        if (labelGithub) labelGithub.innerText = "GitHub: Ready";
+        if (saveBadgeGithub) {
+          saveBadgeGithub.className = "text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700";
+          saveBadgeGithub.innerText = "Connected";
+        }
+      } else {
+        if (badgeGithub) badgeGithub.className = "h-8 px-2.5 rounded-lg text-xs font-medium border border-[#DDE6ED] bg-[#DDE6ED]/40 text-[#526D82] hover:bg-[#DDE6ED] flex items-center gap-1.5 transition";
+        if (indicatorGithub) indicatorGithub.className = "w-1.5 h-1.5 rounded-full bg-[#9DB2BF]";
+        if (labelGithub) labelGithub.innerText = "GitHub: Off";
+        if (saveBadgeGithub) {
+          saveBadgeGithub.className = "text-[10px] font-semibold px-2 py-0.5 rounded bg-[#DDE6ED] text-[#526D82]";
+          saveBadgeGithub.innerText = "Not Set";
+        }
+      }
+
+      if (sidebarStatus) {
+        sidebarStatus.innerText = (hasJira || hasGithub) ? "Keys: Active (Browser)" : "Keys: Not Set";
+      }
+      if (sidebarIndicator) {
+        sidebarIndicator.className = (hasJira || hasGithub) ? "w-2 h-2 rounded-full bg-emerald-500" : "w-2 h-2 rounded-full bg-[#9DB2BF]";
+      }
     }
 
-    function startNewSession() {
-      currentSessionId = null;
-      document.getElementById("messages-container").innerHTML = `
-        <div class="flex items-start gap-3 max-w-3xl">
-          <div class="w-8 h-8 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-          </div>
-          <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-4 text-sm text-slate-200 shadow-sm leading-relaxed">
-            <p class="font-semibold text-white mb-1">New session started.</p>
-            <p class="text-slate-300">Ask about ticket status, code changes, or request Jira actions!</p>
-          </div>
-        </div>
-      `;
+    // OTP Auth & Client-Side Validation
+    let pendingLoginEmail = "";
+
+    function isValidEmail(email) {
+      if (!email || typeof email !== 'string') return false;
+      const re = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+      return re.test(email.trim());
+    }
+
+    function showEmailError(msg) {
+      const input = document.getElementById("login-email");
+      const errContainer = document.getElementById("email-error-msg");
+      const errText = document.getElementById("email-error-text");
+      input.classList.remove("border-[#DDE6ED]", "focus:border-[#526D82]");
+      input.classList.add("border-rose-400", "focus:border-rose-500", "bg-rose-50/20");
+      errText.innerText = msg;
+      errContainer.classList.remove("hidden");
+    }
+
+    function clearEmailError() {
+      const input = document.getElementById("login-email");
+      const errContainer = document.getElementById("email-error-msg");
+      input.classList.remove("border-rose-400", "focus:border-rose-500", "bg-rose-50/20");
+      input.classList.add("border-[#DDE6ED]", "focus:border-[#526D82]");
+      errContainer.classList.add("hidden");
+    }
+
+    function handleEmailInput() {
+      clearEmailError();
+    }
+
+    function showOtpError(msg) {
+      const input = document.getElementById("login-otp");
+      const errContainer = document.getElementById("otp-error-msg");
+      const errText = document.getElementById("otp-error-text");
+      input.classList.remove("border-[#DDE6ED]", "focus:border-[#526D82]");
+      input.classList.add("border-rose-400", "focus:border-rose-500", "bg-rose-50/20");
+      errText.innerText = msg;
+      errContainer.classList.remove("hidden");
+    }
+
+    function clearOtpError() {
+      const input = document.getElementById("login-otp");
+      const errContainer = document.getElementById("otp-error-msg");
+      input.classList.remove("border-rose-400", "focus:border-rose-500", "bg-rose-50/20");
+      input.classList.add("border-[#DDE6ED]", "focus:border-[#526D82]");
+      errContainer.classList.add("hidden");
+    }
+
+    function handleOtpInput(el) {
+      el.value = el.value.replace(/[^0-9]/g, '');
+      clearOtpError();
     }
 
     async function handleRequestOTP(event) {
-      event.preventDefault();
-      const email = document.getElementById("login-email").value;
-      const btn = document.getElementById("request-otp-btn");
-      btn.innerText = "Dispatching code...";
+      if (event) event.preventDefault();
+      clearEmailError();
+      const emailInput = document.getElementById("login-email");
+      const email = emailInput.value.trim();
+
+      if (!email) {
+        showEmailError("Please enter your work email address.");
+        emailInput.focus();
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        showEmailError("Please enter a valid work email (e.g. name@company.com).");
+        emailInput.focus();
+        return;
+      }
+
+      const btn = document.getElementById("btn-send-otp");
+      btn.innerText = "Sending...";
       btn.disabled = true;
 
       try {
@@ -344,22 +722,57 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email })
         });
-        if (!resp.ok) throw new Error(await resp.text());
-        document.getElementById("otp-step-1").classList.add("hidden");
-        document.getElementById("otp-step-2").classList.remove("hidden");
+
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          let errorMsg = "Unable to dispatch verification code.";
+          if (errData && errData.detail) {
+            if (Array.isArray(errData.detail)) {
+              errorMsg = errData.detail.map(e => {
+                let m = e.msg || JSON.stringify(e);
+                return m.replace(/^value is not a valid email address:\s*/i, "");
+              }).join(". ");
+            } else if (typeof errData.detail === "string") {
+              errorMsg = errData.detail;
+            }
+          }
+          showEmailError(errorMsg);
+          return;
+        }
+
+        pendingLoginEmail = email;
+        document.getElementById("sent-email-label").innerText = email;
+        document.getElementById("login-step-1").classList.add("hidden");
+        document.getElementById("login-step-2").classList.remove("hidden");
+        clearOtpError();
+        document.getElementById("login-otp").focus();
       } catch (err) {
-        alert("Failed to request OTP: " + err.message);
+        showEmailError("Network error: " + err.message);
       } finally {
-        btn.innerText = "Send Verification Code";
+        btn.innerHTML = `<span>Send Verification Code</span><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
         btn.disabled = false;
       }
     }
 
+    function backToStep1() {
+      document.getElementById("login-step-1").classList.remove("hidden");
+      document.getElementById("login-step-2").classList.add("hidden");
+      clearEmailError();
+    }
+
     async function handleVerifyOTP(event) {
-      event.preventDefault();
-      const email = document.getElementById("login-email").value;
-      const otp = document.getElementById("login-otp").value;
-      const btn = document.getElementById("verify-otp-btn");
+      if (event) event.preventDefault();
+      clearOtpError();
+      const otpInput = document.getElementById("login-otp");
+      const otp = otpInput.value.trim();
+
+      if (!otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
+        showOtpError("Please enter the complete 6-digit verification code.");
+        otpInput.focus();
+        return;
+      }
+
+      const btn = document.getElementById("btn-verify-otp");
       btn.innerText = "Verifying...";
       btn.disabled = true;
 
@@ -367,17 +780,32 @@
         const resp = await fetch("/api/v1/auth/otp/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, otp })
+          body: JSON.stringify({ email: pendingLoginEmail, otp })
         });
-        if (!resp.ok) throw new Error(await resp.text());
+
+        if (!resp.ok) {
+          const errData = await resp.json().catch(() => ({}));
+          let errorMsg = "Verification code is incorrect or expired.";
+          if (errData && errData.detail) {
+            if (Array.isArray(errData.detail)) {
+              errorMsg = errData.detail.map(e => e.msg || JSON.stringify(e)).join(". ");
+            } else if (typeof errData.detail === "string") {
+              errorMsg = errData.detail;
+            }
+          }
+          showOtpError(errorMsg);
+          return;
+        }
+
         const data = await resp.json();
         authToken = data.access_token;
         localStorage.setItem("access_token", authToken);
-        closeAuthModal();
-        renderAuthNav();
-        await refreshIntegrationBadges();
+
+        syncAppView();
+        updateCredentialBadges();
+        openCredentialsModal();
       } catch (err) {
-        alert("Verification failed: " + err.message);
+        showOtpError("Network error: " + err.message);
       } finally {
         btn.innerText = "Verify & Continue";
         btn.disabled = false;
@@ -387,79 +815,136 @@
     function handleLogout() {
       localStorage.removeItem("access_token");
       authToken = null;
-      renderAuthNav();
-      location.reload();
+      syncAppView();
     }
 
-    async function refreshIntegrationBadges() {
-      if (!authToken) return;
-      try {
-        const resp = await fetch("/api/v1/integrations/status", {
-          headers: { "Authorization": `Bearer ${authToken}` }
-        });
-        if (resp.ok) {
-          const status = await resp.json();
-          const jiraBadge = document.getElementById("jira-status-badge");
-          const ghBadge = document.getElementById("github-status-badge");
-
-          if (status.jira_connected) {
-            jiraBadge.innerText = "Connected";
-            jiraBadge.className = "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-300 border border-emerald-500/30";
-          }
-          if (status.github_connected) {
-            ghBadge.innerText = "Connected";
-            ghBadge.className = "text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-900/50 text-emerald-300 border border-emerald-500/30";
-          }
-        }
-      } catch (err) {
-        console.error("Status fetch failed:", err);
-      }
-    }
-
+    // Save Credentials to Browser LocalStorage
     async function handleSaveJira(event) {
       event.preventDefault();
-      if (!authToken) return openAuthModal();
-      const domain = document.getElementById("jira-domain").value;
-      const email = document.getElementById("jira-email").value;
-      const api_token = document.getElementById("jira-token").value;
+      const domain = document.getElementById("jira-domain").value.trim();
+      const email = document.getElementById("jira-email").value.trim();
+      const token = document.getElementById("jira-token").value.trim();
+      const btn = document.getElementById("btn-save-jira");
+      const statusMsg = document.getElementById("jira-status-msg");
 
-      const resp = await fetch("/api/v1/integrations/jira", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ domain, email, api_token })
-      });
-      const data = await resp.json();
-      if (resp.ok) {
-        alert(data.message);
-        refreshIntegrationBadges();
-      } else {
-        alert("Jira connection error: " + (data.detail || JSON.stringify(data)));
+      btn.innerText = "Validating...";
+      btn.disabled = true;
+      statusMsg.className = "text-xs font-medium text-[#526D82] py-1";
+      statusMsg.innerText = "Validating with Atlassian Cloud...";
+      statusMsg.classList.remove("hidden");
+
+      try {
+        const resp = await fetch("/api/v1/integrations/validate-jira", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ domain, email, api_token: token })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || "Validation failed");
+
+        localStorage.setItem("jira_domain", domain);
+        localStorage.setItem("jira_email", email);
+        localStorage.setItem("jira_token", token);
+
+        statusMsg.className = "text-xs font-medium text-emerald-600 py-1";
+        statusMsg.innerText = "✓ Validated and saved in browser storage.";
+        updateCredentialBadges();
+      } catch (err) {
+        statusMsg.className = "text-xs font-medium text-rose-600 py-1";
+        statusMsg.innerText = "Error: " + err.message;
+      } finally {
+        btn.innerText = "Save Jira Credentials";
+        btn.disabled = false;
       }
     }
 
     async function handleSaveGitHub(event) {
       event.preventDefault();
-      if (!authToken) return openAuthModal();
-      const personal_access_token = document.getElementById("github-token").value;
+      const token = document.getElementById("github-token").value.trim();
+      const repo = document.getElementById("github-repo").value.trim();
+      const btn = document.getElementById("btn-save-github");
+      const statusMsg = document.getElementById("github-status-msg");
 
-      const resp = await fetch("/api/v1/integrations/github", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ personal_access_token })
-      });
-      const data = await resp.json();
-      if (resp.ok) {
-        alert(data.message);
-        refreshIntegrationBadges();
-      } else {
-        alert("GitHub connection error: " + (data.detail || JSON.stringify(data)));
+      btn.innerText = "Validating...";
+      btn.disabled = true;
+      statusMsg.className = "text-xs font-medium text-[#526D82] py-1";
+      statusMsg.innerText = "Validating with GitHub GraphQL...";
+      statusMsg.classList.remove("hidden");
+
+      try {
+        const resp = await fetch("/api/v1/integrations/validate-github", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ personal_access_token: token })
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.detail || "Validation failed");
+
+        localStorage.setItem("github_token", token);
+        if (repo) localStorage.setItem("github_repo", repo);
+
+        statusMsg.className = "text-xs font-medium text-emerald-600 py-1";
+        statusMsg.innerText = "✓ Validated and saved in browser storage.";
+        updateCredentialBadges();
+      } catch (err) {
+        statusMsg.className = "text-xs font-medium text-rose-600 py-1";
+        statusMsg.innerText = "Error: " + err.message;
+      } finally {
+        btn.innerText = "Save GitHub Credentials";
+        btn.disabled = false;
       }
+    }
+
+    function handleClearKeysWithConfirmation() {
+      localStorage.removeItem("jira_domain");
+      localStorage.removeItem("jira_email");
+      localStorage.removeItem("jira_token");
+      localStorage.removeItem("github_token");
+      localStorage.removeItem("github_repo");
+      loadStoredCredentialsToInputs();
+      updateCredentialBadges();
+      
+      const jiraMsg = document.getElementById("jira-status-msg");
+      const ghMsg = document.getElementById("github-status-msg");
+      if (jiraMsg) {
+        jiraMsg.className = "text-xs font-medium text-[#526D82] py-1";
+        jiraMsg.innerText = "Cleared Jira credentials.";
+        jiraMsg.classList.remove("hidden");
+      }
+      if (ghMsg) {
+        ghMsg.className = "text-xs font-medium text-[#526D82] py-1";
+        ghMsg.innerText = "Cleared GitHub credentials.";
+        ghMsg.classList.remove("hidden");
+      }
+    }
+
+    // Chat Functions
+    function setPrompt(promptText) {
+      const input = document.getElementById("user-input");
+      input.value = promptText;
+      autoResizeTextarea(input);
+      input.focus();
+    }
+
+    function startNewSession() {
+      currentSessionId = null;
+      document.getElementById("messages-list").innerHTML = `
+        <div class="flex items-start gap-3 w-full animate-slideUp">
+          <div class="w-7 h-7 rounded-lg bg-[#27374D] text-[#DDE6ED] flex items-center justify-center shrink-0 text-xs font-semibold mt-0.5">
+            ⚡
+          </div>
+          <div class="max-w-[85%] bg-white border border-[#DDE6ED] rounded-2xl rounded-tl-sm p-4 text-xs text-[#27374D] shadow-sm leading-relaxed space-y-1.5">
+            <p class="font-semibold text-[#27374D]">New Query Session</p>
+            <p class="text-[#526D82]">Ask about ticket status, code changes, or request Jira actions.</p>
+          </div>
+        </div>
+      `;
     }
 
     async function handleSendMessage(event) {
@@ -469,52 +954,68 @@
       if (!messageText) return;
 
       if (!authToken) {
-        openAuthModal();
+        syncAppView();
         return;
       }
 
       input.value = "";
+      autoResizeTextarea(input);
+      const list = document.getElementById("messages-list");
       const container = document.getElementById("messages-container");
 
-      // Append user message
-      container.innerHTML += `
-        <div class="flex items-start gap-3 max-w-3xl ml-auto justify-end">
-          <div class="bg-brand-600 rounded-2xl p-4 text-sm text-white shadow-sm leading-relaxed max-w-xl">
-            <p>${escapeHtml(messageText)}</p>
+      // User Message (Right-aligned, max-w-[85%])
+      list.innerHTML += `
+        <div class="flex items-start gap-3 justify-end w-full animate-slideUp">
+          <div class="max-w-[85%] bg-[#27374D] text-white rounded-2xl rounded-tr-sm px-4 py-3 text-xs leading-relaxed shadow-sm">
+            <p class="whitespace-pre-wrap">${escapeHtml(messageText)}</p>
           </div>
-          <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center shrink-0 text-xs font-bold text-white">
+          <div class="w-7 h-7 rounded-lg bg-[#526D82] text-white flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">
             U
           </div>
         </div>
       `;
       container.scrollTop = container.scrollHeight;
 
-      // Temporary bot loading bubble
+      // Loading bubble
       const loadingId = "loading-" + Date.now();
-      container.innerHTML += `
-        <div id="${loadingId}" class="flex items-start gap-3 max-w-3xl">
-          <div class="w-8 h-8 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
-            <svg class="w-4 h-4 text-brand-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
+      list.innerHTML += `
+        <div id="${loadingId}" class="flex items-start gap-3 w-full animate-slideUp">
+          <div class="w-7 h-7 rounded-lg bg-[#526D82] text-white flex items-center justify-center shrink-0 text-xs font-semibold mt-0.5">
+            <span class="animate-softPulse">...</span>
           </div>
-          <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-4 text-sm text-slate-300 shadow-sm leading-relaxed">
-            <span class="animate-pulse">Analyzing Jira tickets & GitHub repositories...</span>
+          <div class="bg-white border border-[#DDE6ED] rounded-2xl rounded-tl-sm px-4 py-3 text-xs text-[#526D82] shadow-sm flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#526D82] animate-ping"></span>
+            <span>Checking tickets & code...</span>
           </div>
         </div>
       `;
       container.scrollTop = container.scrollHeight;
+
+      // In-Memory Client Credentials from localStorage
+      const clientCredentials = {
+        jira_domain: localStorage.getItem("jira_domain") || null,
+        jira_email: localStorage.getItem("jira_email") || null,
+        jira_token: localStorage.getItem("jira_token") || null,
+        github_token: localStorage.getItem("github_token") || null,
+        github_repo: localStorage.getItem("github_repo") || null,
+      };
 
       try {
         const resp = await fetch("/api/v1/chat/message", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${authToken}`
+            "Authorization": `Bearer ${authToken}`,
+            ...(clientCredentials.jira_domain && { "X-Jira-Domain": clientCredentials.jira_domain }),
+            ...(clientCredentials.jira_email && { "X-Jira-Email": clientCredentials.jira_email }),
+            ...(clientCredentials.jira_token && { "X-Jira-Token": clientCredentials.jira_token }),
+            ...(clientCredentials.github_token && { "X-GitHub-Token": clientCredentials.github_token }),
+            ...(clientCredentials.github_repo && { "X-GitHub-Repo": clientCredentials.github_repo }),
           },
           body: JSON.stringify({
             session_id: currentSessionId,
-            content: messageText
+            content: messageText,
+            credentials: clientCredentials
           })
         });
 
@@ -522,24 +1023,54 @@
         if (loadingElem) loadingElem.remove();
 
         if (!resp.ok) {
-          const errData = await resp.json();
-          throw new Error(errData.detail || "Server returned error");
+          const errData = await resp.json().catch(() => ({}));
+          throw new Error(errData.detail || "Server error");
         }
 
         const msgData = await resp.json();
-        
-        // Format markdown response into basic HTML
         const formattedResponse = formatMarkdown(msgData.content);
 
-        container.innerHTML += `
-          <div class="flex items-start gap-3 max-w-3xl">
-            <div class="w-8 h-8 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
-              <svg class="w-4 h-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-              </svg>
+        // Keys required prompt button
+        let keysPromptHtml = "";
+        if (msgData.requires_keys) {
+          keysPromptHtml = `
+            <div class="mt-2.5 pt-2 border-t border-[#DDE6ED]/60">
+              <button onclick="openCredentialsModal()" class="h-8 px-3 bg-[#27374D] hover:bg-[#526D82] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                </svg>
+                <span>Fill Keys in Popup</span>
+                <span>&rarr;</span>
+              </button>
             </div>
-            <div class="bg-slate-800 border border-slate-700/60 rounded-2xl p-4 text-sm text-slate-200 shadow-sm leading-relaxed space-y-2">
-              ${formattedResponse}
+          `;
+          openCredentialsModal();
+        }
+
+        // Tool tag
+        let toolsHtml = "";
+        if (msgData.tool_calls && msgData.tool_calls.length > 0) {
+          toolsHtml = `
+            <div class="mt-2 pt-2 border-t border-[#DDE6ED]/60 flex flex-wrap gap-1">
+              ${msgData.tool_calls.map(tc => `
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#DDE6ED]/60 text-[#526D82]">
+                  ${escapeHtml(tc.tool || "tool")}
+                </span>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        // Assistant Message (Left-aligned, max-w-[85%])
+        list.innerHTML += `
+          <div class="flex items-start gap-3 w-full animate-slideUp">
+            <div class="w-7 h-7 rounded-lg bg-[#27374D] text-[#DDE6ED] flex items-center justify-center shrink-0 text-xs font-semibold mt-0.5">
+              ⚡
+            </div>
+            <div class="max-w-[85%] bg-white border border-[#DDE6ED] rounded-2xl rounded-tl-sm px-4 py-3 text-xs text-[#27374D] shadow-sm leading-relaxed space-y-2">
+              <div class="space-y-1.5 leading-relaxed">${formattedResponse}</div>
+              ${keysPromptHtml}
+              ${toolsHtml}
             </div>
           </div>
         `;
@@ -547,13 +1078,13 @@
       } catch (err) {
         const loadingElem = document.getElementById(loadingId);
         if (loadingElem) loadingElem.remove();
-        container.innerHTML += `
-          <div class="flex items-start gap-3 max-w-3xl">
-            <div class="w-8 h-8 rounded-lg bg-rose-600/20 border border-rose-500/30 flex items-center justify-center shrink-0">
-              ⚠️
+        list.innerHTML += `
+          <div class="flex items-start gap-3 w-full animate-slideUp">
+            <div class="w-7 h-7 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">
+              !
             </div>
-            <div class="bg-slate-800 border border-rose-700/40 rounded-2xl p-4 text-sm text-rose-300">
-              Error: ${escapeHtml(err.message)}
+            <div class="max-w-[85%] bg-white border border-rose-200 rounded-2xl rounded-tl-sm px-4 py-3 text-xs text-rose-700 shadow-sm leading-relaxed">
+              ${escapeHtml(err.message)}
             </div>
           </div>
         `;
@@ -564,13 +1095,12 @@
     function formatMarkdown(text) {
       if (!text) return "";
       let html = escapeHtml(text);
-      // bold
-      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      // code
-      html = html.replace(/`(.*?)`/g, '<code class="bg-slate-900 px-1 py-0.5 rounded text-amber-300 font-mono text-xs">$1</code>');
-      // links [text](url)
-      html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-brand-400 hover:underline">$1</a>');
-      // line breaks
+      html = html.replace(/^### (.*$)/gim, '<div class="font-bold text-[#27374D] mt-2 mb-0.5 text-xs">$1</div>');
+      html = html.replace(/^## (.*$)/gim, '<div class="font-bold text-[#27374D] mt-2.5 mb-1 text-xs">$1</div>');
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-[#27374D]">$1</strong>');
+      html = html.replace(/`(.*?)`/g, '<code class="bg-[#DDE6ED]/60 text-[#27374D] font-mono text-[11px] px-1.5 py-0.5 rounded">$1</code>');
+      html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-[#526D82] hover:text-[#27374D] underline font-medium">$1</a>');
+      html = html.replace(/^- (.*$)/gim, '<li class="ml-3 list-disc text-[#526D82]">$1</li>');
       html = html.replace(/\n/g, '<br/>');
       return html;
     }

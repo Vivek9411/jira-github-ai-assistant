@@ -31,6 +31,12 @@ def test_create_issue_regex_patterns() -> None:
     assert "Mobile search bar overflows screen" in match.group(3)
 
 
+def test_greeting_regex_patterns() -> None:
+    greetings = ["hi", "hii", "hello", "hey", "good morning", "howdy"]
+    for g in greetings:
+        assert agent_service.GREETING_REGEX.search(g) is not None, f"Failed matching greeting: {g}"
+
+
 @pytest.mark.asyncio
 async def test_vector_service_embedding_dimension() -> None:
     text = "Fix authentication token timeout in Jira ticket ENG-104"

@@ -1,5 +1,6 @@
 """Integrations management endpoints for Jira and GitHub credentials."""
 
+from typing import Any
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 from app.api.deps import CurrentUserDep, SessionDep
@@ -14,6 +15,73 @@ from app.services.github_client import GitHubAuthError, GitHubClient, GitHubClie
 from app.services.jira_client import JiraAuthenticationError, JiraClient, JiraClientError
 
 router = APIRouter(prefix="/integrations", tags=["Integrations"])
+
+
+@router.post(
+    "/validate-jira",
+    status_code=status.HTTP_200_OK,
+    summary="Validate Jira Credentials (Stateless)",
+    description="Validate Atlassian Jira credentials directly against Jira Cloud without storing in database.",
+)
+async def validate_jira_credentials(
+    payload: JiraConnectIn,
+    current_user: CurrentUserDep,
+) -> dict[str, Any]:
+    """Test Jira credentials on the fly for client-side storage (Zero-Knowledge BYOK)."""
+    client = JiraClient(domain=payload.domain, email=payload.email, api_token=payload.api_token)
+    try:
+        user_info = await client.validate_connection()
+        return {
+            "valid": True,
+            "domain": client.domain,
+            "display_name": user_info.get("displayName"),
+            "email": payload.email.strip(),
+            "account_id": user_info.get("accountId"),
+            "message": f"Successfully verified Jira Cloud account for '{user_info.get('displayName')}'",
+        }
+    except JiraAuthenticationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Jira authentication failed. Please verify domain, email, and API token: {str(exc)}",
+        ) from exc
+    except JiraClientError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not reach Jira server: {str(exc)}",
+        ) from exc
+
+
+@router.post(
+    "/validate-github",
+    status_code=status.HTTP_200_OK,
+    summary="Validate GitHub Token (Stateless)",
+    description="Validate GitHub PAT token directly against GitHub GraphQL API without storing in database.",
+)
+async def validate_github_token(
+    payload: GitHubConnectIn,
+    current_user: CurrentUserDep,
+) -> dict[str, Any]:
+    """Test GitHub token on the fly for client-side storage (Zero-Knowledge BYOK)."""
+    client = GitHubClient(token=payload.personal_access_token)
+    try:
+        viewer = await client.validate_token()
+        return {
+            "valid": True,
+            "login": viewer.get("login"),
+            "name": viewer.get("name"),
+            "url": viewer.get("url"),
+            "message": f"Successfully verified GitHub account for user '{viewer.get('login')}'",
+        }
+    except GitHubAuthError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid GitHub Personal Access Token: {str(exc)}",
+        ) from exc
+    except GitHubClientError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not reach GitHub API: {str(exc)}",
+        ) from exc
 
 
 @router.post(

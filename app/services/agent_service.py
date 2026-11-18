@@ -28,43 +28,70 @@ class AgentService:
         r"^(?:(?:mark|move|transition|set)\s+(?:ticket\s+|issue\s+)?([A-Z0-9]+-[0-9]+)\s+(?:as\s+|to\s+)?(done|closed|in progress|in review|to do))|(?:close\s+(?:ticket\s+|issue\s+)?([A-Z0-9]+-[0-9]+))",
         re.IGNORECASE,
     )
+    GREETING_REGEX = re.compile(
+        r"^(?:hi+|hello+|hey+|hola|howdy|what's\s+up|good\s+(?:morning|afternoon|evening))\b",
+        re.IGNORECASE,
+    )
 
     async def get_user_clients(
-        self, session: AsyncSession, user_id: Any
+        self, session: AsyncSession, user_id: Any, client_credentials: Any = None
     ) -> tuple[JiraClient | None, GitHubClient | None]:
-        """Retrieve and initialize authenticated Jira and GitHub clients using decrypted tokens."""
-        query = select(UserIntegration).where(UserIntegration.user_id == user_id)
-        result = await session.execute(query)
-        integrations = {i.provider: i for i in result.scalars().all()}
-
+        """Retrieve and initialize authenticated Jira and GitHub clients.
+        
+        Prioritizes in-memory client credentials from browser localStorage (Zero-Knowledge BYOK).
+        Falls back to database stored integrations if not supplied in the request.
+        """
         jira_client: JiraClient | None = None
-        if "jira" in integrations:
-            item = integrations["jira"]
-            try:
-                decrypted_token = default_token_vault.decrypt(item.encrypted_token)
-                jira_client = JiraClient(
-                    domain=item.base_url or "",
-                    email=item.account_email or "",
-                    api_token=decrypted_token,
-                )
-            except Exception as exc:
-                logger.error("Failed to decrypt Jira token for user %s: %s", user_id, exc)
-
         github_client: GitHubClient | None = None
-        if "github" in integrations:
-            item = integrations["github"]
-            try:
-                decrypted_token = default_token_vault.decrypt(item.encrypted_token)
-                github_client = GitHubClient(token=decrypted_token)
-            except Exception as exc:
-                logger.error("Failed to decrypt GitHub token for user %s: %s", user_id, exc)
+
+        # 1. In-memory client credentials from request (Zero Server Storage)
+        if client_credentials:
+            jira_dom = getattr(client_credentials, "jira_domain", None)
+            jira_em = getattr(client_credentials, "jira_email", None)
+            jira_tok = getattr(client_credentials, "jira_token", None)
+            gh_tok = getattr(client_credentials, "github_token", None)
+
+            if jira_dom and jira_em and jira_tok:
+                jira_client = JiraClient(domain=jira_dom, email=jira_em, api_token=jira_tok)
+
+            if gh_tok:
+                github_client = GitHubClient(token=gh_tok)
+
+        # 2. Fallback to database stored tokens if available and not supplied by client
+        if not jira_client or not github_client:
+            query = select(UserIntegration).where(UserIntegration.user_id == user_id)
+            result = await session.execute(query)
+            integrations = {i.provider: i for i in result.scalars().all()}
+
+            if not jira_client and "jira" in integrations:
+                item = integrations["jira"]
+                try:
+                    decrypted_token = default_token_vault.decrypt(item.encrypted_token)
+                    jira_client = JiraClient(
+                        domain=item.base_url or "",
+                        email=item.account_email or "",
+                        api_token=decrypted_token,
+                    )
+                except Exception as exc:
+                    logger.error("Failed to decrypt Jira token for user %s: %s", user_id, exc)
+
+            if not github_client and "github" in integrations:
+                item = integrations["github"]
+                try:
+                    decrypted_token = default_token_vault.decrypt(item.encrypted_token)
+                    github_client = GitHubClient(token=decrypted_token)
+                except Exception as exc:
+                    logger.error("Failed to decrypt GitHub token for user %s: %s", user_id, exc)
 
         return jira_client, github_client
 
     async def get_user_repo_mapping(
-        self, session: AsyncSession, user_id: Any, project_key: str
+        self, session: AsyncSession, user_id: Any, project_key: str, client_credentials: Any = None
     ) -> str | None:
         """Find mapped GitHub repository (owner/repo) for a given Jira project key."""
+        if client_credentials and getattr(client_credentials, "github_repo", None):
+            return getattr(client_credentials, "github_repo")
+
         query = select(ProjectMapping).where(
             ProjectMapping.user_id == user_id,
             ProjectMapping.jira_project_key == project_key.upper(),
@@ -78,10 +105,27 @@ class AgentService:
         session: AsyncSession,
         user: User,
         user_message: str,
+        client_credentials: Any = None,
     ) -> dict[str, Any]:
         """Process natural language request, execute appropriate tools, and return structured response."""
         clean_msg = user_message.strip()
-        jira_client, github_client = await self.get_user_clients(session, user.id)
+        jira_client, github_client = await self.get_user_clients(session, user.id, client_credentials)
+
+        # ---------------------------------------------------------
+        # Branch 0: Friendly Greeting
+        # ---------------------------------------------------------
+        if self.GREETING_REGEX.search(clean_msg):
+            if jira_client or github_client:
+                return {
+                    "response": "Hi! 👋 How can I help you today? You can ask about ticket statuses, sprint blockers, code diffs, or create and close Jira issues.",
+                    "tool_calls": [],
+                    "requires_keys": False,
+                }
+            return {
+                "response": "Hi! 👋 To get started, please add your Jira and GitHub keys so I can look up your tickets and code context.",
+                "tool_calls": [],
+                "requires_keys": True,
+            }
 
         # ---------------------------------------------------------
         # Branch 1: Mutative Action -> Transition / Close Issue
@@ -90,8 +134,9 @@ class AgentService:
         if transition_match:
             if not jira_client:
                 return {
-                    "response": "⚠️ Jira is not connected yet. Please connect your Jira account under Settings/Integrations first.",
+                    "response": "Hi! Please configure your Jira keys in the **Keys** dialog to close or transition tickets.",
                     "tool_calls": [],
+                    "requires_keys": True,
                 }
             if transition_match.group(1):
                 issue_key = transition_match.group(1).upper()
@@ -118,8 +163,9 @@ class AgentService:
         if create_match and ("create" in clean_msg.lower() or "file" in clean_msg.lower()):
             if not jira_client:
                 return {
-                    "response": "⚠️ Jira is not connected yet. Please connect your Jira account to create tickets.",
+                    "response": "Hi! Please configure your Jira keys in the **Keys** dialog to create tickets.",
                     "tool_calls": [],
+                    "requires_keys": True,
                 }
             raw_type = create_match.group(1).title()
             proj_key = create_match.group(2)
@@ -168,7 +214,7 @@ class AgentService:
             if github_client and (ticket_keys or similar_tickets):
                 target_key = ticket_keys[0] if ticket_keys else similar_tickets[0]["issue_key"]
                 proj_prefix = target_key.split("-")[0]
-                repo = await self.get_user_repo_mapping(session, user.id, proj_prefix)
+                repo = await self.get_user_repo_mapping(session, user.id, proj_prefix, client_credentials)
 
                 if repo:
                     try:
@@ -274,8 +320,9 @@ class AgentService:
 
         # Fallback if Jira is not connected
         return {
-            "response": "Hello! I am your Jira-GitHub AI Assistant. To get live ticket updates, create tickets, or view code diffs, please connect your Jira and GitHub accounts via the `/api/v1/integrations` endpoints.",
+            "response": "Hi! 👋 Please add your Jira and GitHub keys in the **Keys** dialog so I can fetch your tickets and code changes.",
             "tool_calls": [],
+            "requires_keys": True,
         }
 
 

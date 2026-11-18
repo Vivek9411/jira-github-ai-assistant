@@ -49,3 +49,16 @@ def test_refresh_token_type() -> None:
 def test_invalid_jwt_token_raises() -> None:
     with pytest.raises(TokenVerificationError):
         decode_jwt_token("invalid.jwt.token.string")
+
+
+def test_email_normalization_and_validation() -> None:
+    from app.schemas.auth import OTPRequestIn
+    from pydantic import ValidationError
+
+    # Trims whitespace and normalizes to lowercase
+    req = OTPRequestIn(email="  Dev@Company.COM  ")
+    assert req.email == "dev@company.com"
+
+    # Rejects malformed strings
+    with pytest.raises(ValidationError):
+        OTPRequestIn(email="not-an-email")
