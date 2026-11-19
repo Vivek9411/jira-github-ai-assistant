@@ -1092,6 +1092,16 @@
       }
     }
 
+    function sanitizeUrl(rawUrl) {
+      if (!rawUrl) return "#";
+      const trimmed = rawUrl.trim();
+      // Allow only absolute http and https URLs to prevent javascript: and data: XSS execution
+      if (/^https?:\/\/[^\s"'>]+$/i.test(trimmed)) {
+        return escapeHtml(trimmed);
+      }
+      return "#";
+    }
+
     function formatMarkdown(text) {
       if (!text) return "";
       let html = escapeHtml(text);
@@ -1099,16 +1109,23 @@
       html = html.replace(/^## (.*$)/gim, '<div class="font-bold text-[#27374D] mt-2.5 mb-1 text-xs">$1</div>');
       html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-[#27374D]">$1</strong>');
       html = html.replace(/`(.*?)`/g, '<code class="bg-[#DDE6ED]/60 text-[#27374D] font-mono text-[11px] px-1.5 py-0.5 rounded">$1</code>');
-      html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-[#526D82] hover:text-[#27374D] underline font-medium">$1</a>');
+      html = html.replace(/\[(.*?)\]\((.*?)\)/g, function(match, label, rawUrl) {
+        const safeUrl = sanitizeUrl(rawUrl);
+        return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-[#526D82] hover:text-[#27374D] underline font-medium">${label}</a>`;
+      });
       html = html.replace(/^- (.*$)/gim, '<li class="ml-3 list-disc text-[#526D82]">$1</li>');
       html = html.replace(/\n/g, '<br/>');
       return html;
     }
 
     function escapeHtml(text) {
-      const div = document.createElement("div");
-      div.textContent = text;
-      return div.innerHTML;
+      if (!text) return "";
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
   </script>
 </body>

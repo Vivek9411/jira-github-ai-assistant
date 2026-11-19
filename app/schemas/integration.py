@@ -3,7 +3,8 @@
 import uuid
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from app.services.jira_client import validate_jira_domain
 
 
 class JiraConnectIn(BaseModel):
@@ -11,6 +12,11 @@ class JiraConnectIn(BaseModel):
     domain: str = Field(..., description="Atlassian domain e.g. company.atlassian.net")
     email: str = Field(..., description="Email associated with Atlassian account")
     api_token: str = Field(..., min_length=10, description="Atlassian REST API token")
+
+    @field_validator("domain")
+    @classmethod
+    def validate_domain(cls, v: str) -> str:
+        return validate_jira_domain(v)
 
 
 class GitHubConnectIn(BaseModel):

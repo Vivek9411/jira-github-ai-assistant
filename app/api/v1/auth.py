@@ -3,6 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 from app.api.deps import CurrentUserDep, SessionDep
 from app.core.config import get_settings
+from app.core.security import TokenVerificationError
 from app.schemas.auth import (
     OTPRequestIn,
     OTPRequestResponse,
@@ -12,9 +13,11 @@ from app.schemas.auth import (
     UserOut,
 )
 from app.services.auth_service import (
+    InactiveAccountError,
     InvalidCredentialsError,
     MaxAttemptsExceededError,
     OTPExpiredError,
+    RateLimitExceededError,
     UserNotFoundError,
     auth_service,
 )
@@ -42,6 +45,16 @@ async def request_otp(
             email=payload.email,
             expires_in_minutes=settings.OTP_EXPIRE_MINUTES,
         )
+    except InactiveAccountError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is inactive or disabled.",
+        ) from exc
+    except RateLimitExceededError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(exc),
+        ) from exc
     except EmailDeliveryError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -63,6 +76,11 @@ async def verify_otp(
     try:
         _, tokens = await auth_service.verify_otp(session, payload.email, payload.otp)
         return tokens
+    except InactiveAccountError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is inactive or disabled.",
+        ) from exc
     except InvalidCredentialsError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -98,7 +116,7 @@ async def refresh_token(
 ) -> TokenOut:
     try:
         return await auth_service.refresh_access_token(session, payload.refresh_token)
-    except InvalidCredentialsError as exc:
+    except (InvalidCredentialsError, TokenVerificationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(exc),

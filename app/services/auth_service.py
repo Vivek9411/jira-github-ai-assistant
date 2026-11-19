@@ -2,11 +2,13 @@
 
 import logging
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.security import (
+    TokenVerificationError,
     create_access_token,
     create_refresh_token,
     decode_jwt_token,
@@ -32,6 +34,16 @@ class InvalidCredentialsError(AuthServiceError):
     pass
 
 
+class InactiveAccountError(AuthServiceError):
+    """Raised when a user account is inactive or suspended."""
+    pass
+
+
+class RateLimitExceededError(AuthServiceError):
+    """Raised when OTP dispatch rate limits or cooldown periods are exceeded."""
+    pass
+
+
 class OTPExpiredError(AuthServiceError):
     """Raised when submitted OTP has expired."""
     pass
@@ -49,6 +61,34 @@ class UserNotFoundError(AuthServiceError):
 
 class AuthService:
     """Manages passwordless OTP authentication and JWT issuance."""
+
+    def __init__(self) -> None:
+        self._rate_limit_history: dict[str, list[datetime]] = {}
+
+    def _check_rate_limit(self, email: str) -> None:
+        """Enforce request cooldown and sliding window rate limits on OTP generation."""
+        now = datetime.now(timezone.utc)
+        normalized_email = email.lower().strip()
+
+        history = self._rate_limit_history.get(normalized_email, [])
+        window_start = now - timedelta(minutes=settings.OTP_WINDOW_MINUTES)
+        recent_requests = [ts for ts in history if ts > window_start]
+
+        if recent_requests:
+            elapsed_since_last = (now - recent_requests[-1]).total_seconds()
+            if elapsed_since_last < settings.OTP_COOLDOWN_SECONDS:
+                remaining = int(settings.OTP_COOLDOWN_SECONDS - elapsed_since_last)
+                raise RateLimitExceededError(
+                    f"Please wait {remaining}s before requesting another verification code."
+                )
+
+        if len(recent_requests) >= settings.OTP_MAX_REQUESTS_PER_WINDOW:
+            raise RateLimitExceededError(
+                f"Maximum OTP requests ({settings.OTP_MAX_REQUESTS_PER_WINDOW}) reached for this window. Please try again later."
+            )
+
+        recent_requests.append(now)
+        self._rate_limit_history[normalized_email] = recent_requests
 
     async def get_or_create_user(self, session: AsyncSession, email: str, full_name: str | None = None) -> User:
         """Retrieve existing user by email or create a new user profile."""
@@ -71,7 +111,11 @@ class AuthService:
 
     async def request_otp(self, session: AsyncSession, email: str) -> None:
         """Generate, store, and dispatch a new OTP verification code for the user."""
+        self._check_rate_limit(email)
+
         user = await self.get_or_create_user(session, email)
+        if not user.is_active:
+            raise InactiveAccountError("User account is inactive or disabled")
 
         # Invalidate previous unused OTP requests for this user
         await session.execute(
@@ -107,6 +151,9 @@ class AuthService:
 
         if not user:
             raise UserNotFoundError("User account does not exist")
+
+        if not user.is_active:
+            raise InactiveAccountError("User account is inactive or disabled")
 
         otp_query = (
             select(OTPRequest)
@@ -156,7 +203,11 @@ class AuthService:
 
     async def refresh_access_token(self, session: AsyncSession, refresh_token_str: str) -> TokenOut:
         """Validate refresh token and issue a fresh access token."""
-        payload = decode_jwt_token(refresh_token_str)
+        try:
+            payload = decode_jwt_token(refresh_token_str)
+        except TokenVerificationError as exc:
+            raise InvalidCredentialsError(str(exc)) from exc
+
         if payload.get("type") != "refresh":
             raise InvalidCredentialsError("Invalid token type")
 
@@ -164,7 +215,12 @@ class AuthService:
         if not user_id_str:
             raise InvalidCredentialsError("Malformed token subject")
 
-        query = select(User).where(User.id == user_id_str, User.is_active.is_(True))
+        try:
+            user_uuid = uuid.UUID(user_id_str)
+        except ValueError as exc:
+            raise InvalidCredentialsError("Malformed user ID in token") from exc
+
+        query = select(User).where(User.id == user_uuid, User.is_active.is_(True))
         result = await session.execute(query)
         user = result.scalar_one_or_none()
 

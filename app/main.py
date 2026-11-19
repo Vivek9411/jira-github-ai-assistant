@@ -59,12 +59,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS Middleware configuration
+# CORS Middleware configuration - strict explicit origin allowlist
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict to configured client origins
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
 )
 

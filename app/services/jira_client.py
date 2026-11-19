@@ -1,11 +1,41 @@
 """Asynchronous Jira REST API client for ticket operations and JQL execution."""
 
 import base64
+import ipaddress
 import logging
+import re
 from typing import Any
 import httpx
 
 logger = logging.getLogger(__name__)
+
+JIRA_DOMAIN_REGEX = re.compile(
+    r"^(?:[a-zA-Z0-9][-a-zA-Z0-9]{0,62}\.)+(?:atlassian\.net|jira\.com)$",
+    re.IGNORECASE,
+)
+
+
+def validate_jira_domain(domain: str) -> str:
+    """Validate and sanitize Jira Cloud domain, blocking SSRF and internal network probing."""
+    if not domain or not isinstance(domain, str):
+        raise JiraClientError("Jira domain cannot be empty")
+
+    clean_domain = domain.strip().removeprefix("https://").removeprefix("http://").rstrip("/")
+    host_only = clean_domain.split("/")[0].split(":")[0]
+
+    # Block IP addresses (private, loopback, link-local, cloud metadata)
+    try:
+        ip = ipaddress.ip_address(host_only)
+        raise JiraClientError(f"Prohibited Jira host: direct IP addresses are not permitted ({host_only})")
+    except ValueError:
+        pass  # Not a raw IP, proceed to domain regex
+
+    if not JIRA_DOMAIN_REGEX.match(host_only):
+        raise JiraClientError(
+            f"Invalid Jira domain '{clean_domain}'. Only official Atlassian Cloud domains (*.atlassian.net, *.jira.com) are permitted."
+        )
+
+    return clean_domain
 
 
 class JiraClientError(Exception):
@@ -32,7 +62,7 @@ class JiraClient:
     """Asynchronous client interacting directly with Atlassian Jira Cloud REST API v3."""
 
     def __init__(self, domain: str, email: str, api_token: str) -> None:
-        clean_domain = domain.strip().removeprefix("https://").removeprefix("http://").rstrip("/")
+        clean_domain = validate_jira_domain(domain)
         self.base_url = f"https://{clean_domain}/rest/api/3"
         self.domain = clean_domain
 

@@ -3,7 +3,8 @@
 import uuid
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+from app.services.jira_client import validate_jira_domain
 
 
 class ClientCredentials(BaseModel):
@@ -13,6 +14,13 @@ class ClientCredentials(BaseModel):
     jira_token: str | None = Field(None, description="Atlassian REST API token from browser localStorage")
     github_token: str | None = Field(None, description="GitHub Personal Access Token from browser localStorage")
     github_repo: str | None = Field(None, description="Default GitHub repository (e.g. owner/repo)")
+
+    @field_validator("jira_domain")
+    @classmethod
+    def validate_domain(cls, v: str | None) -> str | None:
+        if v:
+            return validate_jira_domain(v)
+        return v
 
 
 class ChatMessageIn(BaseModel):

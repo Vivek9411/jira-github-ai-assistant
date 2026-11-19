@@ -12,19 +12,22 @@ class TextToJQLService:
 
     TICKET_KEY_REGEX = re.compile(r"\b([A-Z][A-Z0-9]+-[0-9]+)\b")
     PROJECT_KEY_REGEX = re.compile(r"\b(?:in\s+project|project|in)\s+([A-Z][A-Z0-9]{1,9})\b", re.IGNORECASE)
+    PROJECT_KEY_STRICT_REGEX = re.compile(r"^[A-Z][A-Z0-9]{1,9}$")
 
     def extract_ticket_keys(self, query: str) -> list[str]:
         """Extract all Jira issue keys (e.g. ENG-104, PROJ-23) present in text."""
         return list(dict.fromkeys(self.TICKET_KEY_REGEX.findall(query)))
 
     def extract_project_key(self, query: str, default: str | None = None) -> str | None:
-        """Extract project key, ignoring common false positive English words."""
+        """Extract project key, ignoring common false positive English words and strictly validating fallback."""
         ignore_words = {"THE", "THIS", "A", "AN", "MY", "OUR", "ALL", "SOME", "ANY", "PROJECT", "ISSUE", "TICKET"}
         for match in self.PROJECT_KEY_REGEX.finditer(query):
             candidate = match.group(1).upper()
             if candidate not in ignore_words and len(candidate) >= 2:
                 return candidate
-        return default
+        if default and self.PROJECT_KEY_STRICT_REGEX.match(default.strip().upper()):
+            return default.strip().upper()
+        return None
 
     def translate(self, natural_query: str, default_project_key: str | None = None) -> str:
         """Translate a natural language question into an optimized JQL string."""
